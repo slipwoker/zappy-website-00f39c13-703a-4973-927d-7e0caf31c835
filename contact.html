@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="index, follow">
+    <title>יש לך רעיון לעיצוב? בוא נדבר — ThreadFlow</title>
+    <meta name="description" content="צור קשר עם צוות ThreadFlow לשאלות, הזמנות מיוחדות או עיצובים אישיים. אנחנו כאן כדי להפוך את החזון שלך לחולצה מושלמת. נשמח לשמוע ממך!">
+    <meta name="keywords" content="צור קשר ThreadFlow, הזמנת חולצות מעוצבות, עיצוב אישי לחולצות, שירות לקוחות, הדפסה אישית">
+    
+    <!-- Favicons -->
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="/assets/favicon-48x48.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/assets/favicon-512x512.png">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+    <!-- Zappy Analytics -->
+<script>
+(function() {
+  'use strict';
+  
+  // Configuration
+  var config = {
+    websiteId: '00f39c13-703a-4973-927d-7e0caf31c835',
+    apiUrl: 'https://api.zappy5.com/api/analytics/track',
+    sessionDuration: 30 * 60 * 1000, // 30 minutes
+    visitorDuration: 30 * 24 * 60 * 60 * 1000, // 30 days
+    trackPageViews: true,
+    trackClicks: true,
+    trackFormSubmissions: true
+  };
+  
+  // Generate or retrieve persistent visitor ID (30 days)
+  function getVisitorId() {
+    var visitorKey = 'zappy_visitor_' + config.websiteId;
+    var visitor = null;
+    
+    try {
+      visitor = localStorage.getItem(visitorKey);
+      if (visitor) {
+        var visitorData = JSON.parse(visitor);
+        var now = Date.now();
+        
+        // Check if visitor ID is still valid (30 days)
+        if (now - visitorData.created < config.visitorDuration) {
+          // Update last seen timestamp
+          visitorData.lastSeen = now;
+          localStorage.setItem(visitorKey, JSON.stringify(visitorData));
+          return visitorData.id;
+        }
+      }
+    } catch (e) {
+      console.warn('Zappy Analytics: LocalStorage not available');
+    }
+    
+    // Generate new visitor ID
+    var newVisitorId = 'zv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    
+    try {
+      localStorage.setItem(visitorKey, JSON.stringify({
+        id: newVisitorId,
+        created: Date.now(),
+        lastSeen: Date.now()
+      }));
+    } catch (e) {
+      // Continue without local storage
+    }
+    
+    return newVisitorId;
+  }
+  
+  // Generate or retrieve session ID (30 minutes)
+  function getSessionId() {
+    var sessionKey = 'zappy_session_' + config.websiteId;
+    var session = null;
+    
+    try {
+      session = sessionStorage.getItem(sessionKey);
+      if (session) {
+        var sessionData = JSON.parse(session);
+        var now = Date.now();
+        
+        // Check if session is still valid
+        if (now - sessionData.timestamp < config.sessionDuration) {
+          // Update timestamp
+          sessionData.timestamp = now;
+          sessionStorage.setItem(sessionKey, JSON.stringify(sessionData));
+          return sessionData.id;
+        }
+      }
+    } catch (e) {
+      console.warn('Zappy Analytics: SessionStorage not available');
+    }
+    
+    // Generate new session ID
+    var newSessionId = 'zs_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    
+    try {
+      sessionStorage.setItem(sessionKey, JSON.stringify({
+        id: newSessionId,
+        timestamp: Date.now()
+      }));
+    } catch (e) {
+      // Continue without session storage
+    }
+    
+    return newSessionId;
+  }
+  
+  var visitorId = getVisitorId();
+  var sessionId = getSessionId();
+  
+  // Track an event
+  function trackEvent(eventType, data) {
+    data = data || {};
+    
+    var eventData = {
+      website_id: config.websiteId,
+      event_type: eventType,
+      page_path: window.location.pathname,
+      referrer: document.referrer || 'direct',
+      visitor_id: visitorId,
+      session_id: sessionId,
+      metadata: data
+    };
+    
+    // Use sendBeacon if available (better for page unload events)
+    if (navigator.sendBeacon) {
+      var blob = new Blob([JSON.stringify(eventData)], { type: 'application/json' });
+      navigator.sendBeacon(config.apiUrl, blob);
+    } else {
+      // Fallback to fetch
+      fetch(config.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(eventData),
+        keepalive: true
+      }).catch(function(error) {
+        console.warn('Zappy Analytics: Failed to track event', error);
+      });
+    }
+  }
+  
+  // Track page view
+  if (config.trackPageViews) {
+    trackEvent('pageview', {
+      title: document.title,
+      url: window.location.href
+    });
+  }
+  
+  // Track clicks on important elements
+  if (config.trackClicks) {
+    document.addEventListener('click', function(e) {
+      var target = e.target;
+      
+      // Track button clicks (counted as actions)
+      if (target.tagName === 'BUTTON' || target.closest('button')) {
+        var button = target.tagName === 'BUTTON' ? target : target.closest('button');
+        trackEvent('click', {
+          element: 'button',
+          text: button.textContent.trim().substring(0, 100),
+          id: button.id || null,
+          class: button.className || null
+        });
+      }
+      
+      // Track link clicks (navigation - not counted as actions)
+      else if (target.tagName === 'A' || target.closest('a')) {
+        var link = target.tagName === 'A' ? target : target.closest('a');
+        trackEvent('navigation', {
+          element: 'link',
+          text: link.textContent.trim().substring(0, 100),
+          href: link.href,
+          external: link.hostname !== window.location.hostname
+        });
+      }
+    }, true);
+  }
+  
+  // Track form submissions
+  if (config.trackFormSubmissions) {
+    document.addEventListener('submit', function(e) {
+      var form = e.target;
+      
+      trackEvent('form_submit', {
+        form_id: form.id || null,
+        form_name: form.name || null,
+        form_action: form.action || null,
+        form_method: form.method || 'GET'
+      });
+    }, true);
+  }
+  
+  // Track time on page (send on page unload)
+  var pageLoadTime = Date.now();
+  
+  window.addEventListener('beforeunload', function() {
+    var timeOnPage = Math.floor((Date.now() - pageLoadTime) / 1000); // in seconds
+    
+    trackEvent('page_unload', {
+      time_on_page: timeOnPage,
+      page_path: window.location.pathname
+    });
+  });
+  
+  // Expose tracking function globally for custom events
+  window.zappyAnalytics = {
+    track: trackEvent,
+    getVisitorId: function() { return visitorId; },
+    getSessionId: function() { return sessionId; }
+  };
+  
+})();
+</script>
+<!-- End Zappy Analytics -->
+    <meta property="og:title" content="יש לך רעיון לעיצוב? בוא נדבר — ThreadFlow">
+  <meta property="og:description" content="צור קשר עם צוות ThreadFlow לשאלות, הזמנות מיוחדות או עיצובים אישיים. אנחנו כאן כדי להפוך את החזון שלך לחולצה מושלמת. נשמח לשמוע ממך!">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="he_IL">
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="יש לך רעיון לעיצוב? בוא נדבר — ThreadFlow">
+  <meta name="twitter:description" content="צור קשר עם צוות ThreadFlow לשאלות, הזמנות מיוחדות או עיצובים אישיים. אנחנו כאן כדי להפוך את החזון שלך לחולצה מושלמת. נשמח לשמוע ממך!">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="/assets/favicon-48x48.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/assets/favicon-512x512.png">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+    <!-- Cookie Consent -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vanilla-cookieconsent@3/dist/cookieconsent.css" />
+    <script src="https://cdn.jsdelivr.net/npm/vanilla-cookieconsent@3/dist/cookieconsent.umd.js"></script>
+    <!-- Mickidum Accessibility Toolbar -->
+    <script src="https://cdn.jsdelivr.net/gh/mickidum/acc_toolbar/acctoolbar/acctoolbar.min.js"></script>
+    <link rel="stylesheet" href="/styles.css">
+
+    <style id="zappy-dropdown-submenu-styles">
+      /* ========== DESKTOP DROPDOWN SUBMENU STYLES ========== */
+      /* Base styles for dropdown submenus - parent must be positioned */
+      .nav-menu li:has(.sub-menu), nav li:has(.sub-menu), .navbar li:has(.sub-menu), #navMenu li:has(.sub-menu) { position: relative; }
+      /* Submenu base - hidden by default */
+      .nav-menu .sub-menu, nav .sub-menu, .navbar .sub-menu, #navMenu .sub-menu { display: block !important; position: absolute !important; top: 100%; left: 0; min-width: 220px; background: white; border-radius: 8px; box-shadow: 0 8px 25px rgba(0,0,0,0.15); padding: 8px 0; opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.3s ease; z-index: 1000; list-style: none; pointer-events: none; }
+      /* CRITICAL: Desktop hover styles to show dropdown */
+      .nav-menu li:hover > .sub-menu, nav li:hover > .sub-menu, .navbar li:hover > .sub-menu, #navMenu li:hover > .sub-menu { opacity: 1 !important; visibility: visible !important; transform: translateY(0) !important; pointer-events: auto !important; }
+      /* Submenu item styling */
+      .sub-menu li { list-style: none; margin: 0; padding: 0; }
+      .sub-menu a { display: block !important; padding: 10px 16px !important; color: #333 !important; font-weight: 500; text-decoration: none; white-space: nowrap; transition: background-color 0.2s; }
+      .sub-menu a:hover { background-color: #f5f5f5; }
+      /* RTL (Hebrew/Arabic) dropdown positioning */
+      [dir="rtl"] .nav-menu .sub-menu, [dir="rtl"] nav .sub-menu, [dir="rtl"] .navbar .sub-menu, html[lang="he"] .nav-menu .sub-menu, html[lang="he"] nav .sub-menu, html[lang="he"] .navbar .sub-menu, html[lang="ar"] .nav-menu .sub-menu, html[lang="ar"] nav .sub-menu, html[lang="ar"] .navbar .sub-menu { left: auto !important; right: 0 !important; }
+      /* Hide empty dropdown menus */
+      .sub-menu:empty, .sub-menu:not(:has(li:not(.zappy-hidden-menu-item))), .sub-menu:not(:has(li)) { display: none !important; opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
+      /* Desktop: show submenu on Menu Group hover */
+      li:has(.menu-group-title):hover > .sub-menu { opacity: 1 !important; visibility: visible !important; transform: translateY(0) !important; pointer-events: auto !important; }
+      /* Menu Group title styling */
+      .nav-menu > li > .menu-group-title, #navMenu > li > .menu-group-title { display: inline-block; padding: 0.5rem 1rem; cursor: default; user-select: none; }
+      
+      /* ========== MOBILE SUBMENU STYLES ========== */
+      @media (max-width: 768px) {
+        .nav-menu .sub-menu, nav .sub-menu, .navbar .sub-menu, #navMenu .sub-menu { position: static !important; transform: none !important; box-shadow: none !important; background: transparent !important; max-height: 0; overflow: hidden; opacity: 0; visibility: hidden; transition: max-height 0.3s ease, opacity 0.3s ease; padding: 0 !important; border-radius: 0 !important; }
+        .sub-menu.mobile-expanded { max-height: 500px !important; opacity: 1 !important; visibility: visible !important; padding: 8px 0 8px 16px !important; }
+        [dir="rtl"] .sub-menu.mobile-expanded, html[lang="he"] .sub-menu.mobile-expanded { padding: 8px 16px 8px 0 !important; }
+        /* Disable hover behavior on mobile */
+        .nav-menu li:hover > .sub-menu, nav li:hover > .sub-menu, .navbar li:hover > .sub-menu, #navMenu li:hover > .sub-menu { opacity: 0; visibility: hidden; pointer-events: none; }
+        .nav-menu li > .sub-menu.mobile-expanded, nav li > .sub-menu.mobile-expanded, .navbar li > .sub-menu.mobile-expanded, #navMenu li > .sub-menu.mobile-expanded { opacity: 1 !important; visibility: visible !important; pointer-events: auto !important; }
+        .nav-menu li:has(.sub-menu), nav li:has(.sub-menu), .navbar li:has(.sub-menu), #navMenu li:has(.sub-menu) { display: flex !important; flex-wrap: wrap !important; align-items: center !important; }
+        .nav-menu li:has(.sub-menu) > a, nav li:has(.sub-menu) > a, .navbar li:has(.sub-menu) > a, #navMenu li:has(.sub-menu) > a { flex: 1 !important; }
+        .nav-menu li:has(.sub-menu) > a [class*="chevron"], .nav-menu li:has(.sub-menu) > a [class*="arrow"], .nav-menu li:has(.sub-menu) > a .fa-chevron-down, .nav-menu li:has(.sub-menu) > a .fa-angle-down, nav li:has(.sub-menu) > a [class*="chevron"], nav li:has(.sub-menu) > a [class*="arrow"], #navMenu li:has(.sub-menu) > a [class*="chevron"], #navMenu li:has(.sub-menu) > a [class*="arrow"] { display: none !important; visibility: hidden !important; }
+        .mobile-submenu-toggle { display: flex !important; align-items: center !important; justify-content: center !important; width: 44px !important; height: 44px !important; background: transparent !important; border: none !important; cursor: pointer !important; }
+        .mobile-submenu-toggle::after { content: '' !important; width: 0 !important; height: 0 !important; border-left: 6px solid transparent !important; border-right: 6px solid transparent !important; border-top: 7px solid currentColor !important; transition: transform 0.3s ease !important; }
+        .mobile-submenu-toggle.expanded::after { transform: rotate(180deg) !important; }
+        .nav-menu li:has(.sub-menu) > .sub-menu, nav li:has(.sub-menu) > .sub-menu { flex-basis: 100% !important; width: 100% !important; }
+        .sub-menu a { padding: 10px 0 !important; display: block !important; }
+        .nav-menu li:has(.sub-menu) > .menu-group-title, nav li:has(.sub-menu) > .menu-group-title, .navbar li:has(.sub-menu) > .menu-group-title, #navMenu li:has(.sub-menu) > .menu-group-title { flex: 1 !important; }
+      }
+      @media (min-width: 769px) { .mobile-submenu-toggle { display: none !important; } }
+    </style>
+
+    <style id="zappy-widget-visibility">
+      #mic-access-tool-general-button, .mic-access-tool-general-button,
+      #mic-init-access-tool .mic-access-tool-general-button, #mic-init-access-tool #mic-access-tool-general-button,
+      ._access-icon, #mic-access-tool-box, .mic-access-tool-box,
+      #mic-init-access-tool #mic-access-tool-box, div[id*="mic-access-tool-box"], ._access-menu {
+        display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important;
+      }
+    </style>
+</head>
+<body>
+
+
+    <div class="mobile-search-panel" id="mobile-search-panel">
+      <div class="search-wrapper">
+        <input type="text" id="mobile-search-input" placeholder="חיפוש מוצרים..." autocomplete="off">
+        <button class="search-submit" id="mobile-search-submit" title="חיפוש">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        </button>
+        <button class="close-search" id="close-mobile-search">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="search-results" id="mobile-search-results"></div>
+    </div>
+  
+<script>window.ZAPPY_WEBSITE_ID = "00f39c13-703a-4973-927d-7e0caf31c835";window.ZAPPY_API_BASE = (window.location.pathname.includes('/preview') ? "https://api.zappy5.com" : "https://api.zappy5.com");</script>
+  <nav class="navbar" dir="rtl">
+  <button class="mobile-toggle" id="mobileToggle" aria-label="Menu">
+    <svg class="hamburger-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+    </svg>
+    <svg class="close-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" style="display:none;">
+      <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+    </svg>
+  </button>
+  
+  <button class="phone-header-btn" aria-label="Call">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+    </svg>
+  </button>
+  
+  <div class="nav-container">
+    <div class="nav-brand">
+      <a href="/" class="logo-link">
+        <img src="/assets/business-logo.webp" alt="ThreadFlow" class="logo" />
+      </a>
+    </div>
+    
+    <ul class="nav-menu" id="navMenu">
+
+    <li class="menu-item-has-children zappy-products-dropdown">
+      <a href="/products">
+        קולקציה
+        
+        <svg class="dropdown-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 9l6 6 6-6"></path>
+        </svg>
+      </a>
+      <ul class="sub-menu" id="zappy-nav-category-links">
+        <li><a href="/products">כל המוצרים</a></li>
+        <!-- Categories will be loaded dynamically -->
+      </ul>
+    </li>
+  <li><a href="/about">אודות</a></li><li><a href="/contact">צור קשר</a></li></ul><div class="nav-ecommerce-icons nav-icons-left"><a href="/login" class="login-link nav-login" title="התחברות"><svg class="login-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></a><a href="#cart" class="cart-link nav-cart" id="cart-drawer-toggle" title="עגלת קניות"><svg class="cart-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg><span class="cart-count">0</span></a><div class="nav-search-box">
+    <input type="text" class="nav-search-input" id="nav-search-input" placeholder="חיפוש מוצרים..." autocomplete="off">
+    <button class="nav-search-btn" id="nav-search-btn" title="חיפוש">
+      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    </button>
+    <div class="nav-search-results" id="nav-search-results"></div>
+  </div></div><div class="nav-ecommerce-icons nav-icons-right"><button class="nav-search-toggle" id="mobile-search-toggle" title="חיפוש"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></button></div>
+    
+    
+  </div>
+</nav>
+
+    <nav class="zappy-catalog-menu rtl" id="zappy-catalog-menu" dir="rtl">
+      <div class="catalog-menu-container">
+        <a href="/products" class="catalog-menu-item catalog-menu-all">כל המוצרים</a>
+        <div class="catalog-menu-categories" id="zappy-category-links">
+          <!-- Categories will be loaded dynamically -->
+        </div>
+      </div>
+    </nav>
+  
+  
+  <main>
+    <section class="contact-section" data-layout-spec="צור קשר-contact">
+  <div class="contact-section__container">
+    <div class="contact-section__header">
+      <h1 class="contact-section__title">נשמח לשמוע ממך</h1>
+      <p class="contact-section__intro">צוות ThreadFlow זמין לכל שאלה, הצעה או משוב. נחזור אליך תוך 24 שעות בימי עבודה.</p>
+    </div>
+
+    <div class="contact-section__form-wrapper">
+      <div class="contact-section__paper-backplate" aria-hidden="true">
+        <img data-placeholder="paper-texture-backplate" data-context="Subtle cream paper texture with gentle fiber pattern, soft edges, minimal detail, warm natural lighting" width="400" height="500" src="/assets/site-paper-texture-backplate.webp" alt="">
+      </div>
+
+      <div class="contact-section__form-card">
+        <form class="contact-form">
+          <div class="contact-section__field">
+            <label for="contact-name" class="contact-section__label">שם מלא</label>
+            <input type="text" id="contact-name" name="name" class="contact-section__input" required="">
+          </div>
+
+          <div class="contact-section__field">
+            <label for="contact-email" class="contact-section__label">דוא״ל</label>
+            <input type="email" id="contact-email" name="email" class="contact-section__input" required="">
+          </div>
+
+          <div class="contact-section__field">
+            <label for="contact-phone" class="contact-section__label">טלפון</label>
+            <input type="tel" id="contact-phone" name="phone" class="contact-section__input">
+          </div>
+
+          <div class="contact-section__field">
+            <label for="contact-message" class="contact-section__label">הודעה</label>
+            <textarea id="contact-message" name="message" class="contact-section__textarea" rows="5" required=""></textarea>
+          </div>
+
+          <button type="submit" class="contact-section__submit-btn">
+            <span>שלח הודעה</span>
+            <svg data-no-icon-edit="true" aria-hidden="true" class="contact-section__btn-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M14 2L6 10M14 2L9 14L6 10M14 2L2 7L6 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+          </button>
+        </form>
+
+        <div class="contact-section__details">
+          <p class="contact-section__detail-item">
+            <svg data-element-type="icon" data-icon-type="svg" class="contact-section__detail-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2.25 5.25L9 9.75L15.75 5.25M3 13.5H15C15.8284 13.5 16.5 12.8284 16.5 12V6C16.5 5.17157 15.8284 4.5 15 4.5H3C2.17157 4.5 1.5 5.17157 1.5 6V12C1.5 12.8284 2.17157 13.5 3 13.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            <span>[business_email]</span>
+          </p>
+          <p class="contact-section__detail-item">
+            <svg data-element-type="icon" data-icon-type="svg" class="contact-section__detail-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2.25 4.5C2.25 3.67157 2.92157 3 3.75 3H6.37868C6.71114 3 7.01957 3.18437 7.17082 3.47918L8.67082 6.22918C8.84164 6.55664 8.78636 6.96137 8.53033 7.21967L6.96967 8.78033C7.72386 10.3597 9.14027 11.7761 10.7197 12.5303L12.2803 10.9697C12.5386 10.7136 12.9434 10.6584 13.2708 10.8292L16.0208 12.3292C16.3156 12.4804 16.5 12.7889 16.5 13.1213V15.75C16.5 16.5784 15.8284 17.25 15 17.25H14.25C7.48654 17.25 2.25 12.0135 2.25 5.25V4.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            <span>[business_phone]</span>
+          </p>
+          <p class="contact-section__detail-item">
+            <svg data-element-type="icon" data-icon-type="svg" class="contact-section__detail-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9 9.75C10.2426 9.75 11.25 8.74264 11.25 7.5C11.25 6.25736 10.2426 5.25 9 5.25C7.75736 5.25 6.75 6.25736 6.75 7.5C6.75 8.74264 7.75736 9.75 9 9.75Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+              <path d="M14.25 7.5C14.25 12 9 15.75 9 15.75C9 15.75 3.75 12 3.75 7.5C3.75 6.10761 4.30312 4.77226 5.28769 3.78769C6.27226 2.80312 7.60761 2.25 9 2.25C10.3924 2.25 11.7277 2.80312 12.7123 3.78769C13.6969 4.77226 14.25 6.10761 14.25 7.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            <span>ימים א׳-ה׳, 9:00-18:00</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="contact-section__divider-wrapper">
+    <svg data-no-icon-edit="true" aria-hidden="true" viewBox="0 0 1200 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,60 L0,30 L20,32 L40,28 L60,33 L80,29 L100,31 L120,27 L140,32 L160,28 L180,30 L200,26 L220,31 L240,29 L260,27 L280,32 L300,28 L320,30 L340,26 L360,31 L380,29 L400,27 L420,32 L440,28 L460,30 L480,26 L500,31 L520,29 L540,27 L560,32 L580,28 L600,30 L620,26 L640,31 L660,29 L680,27 L700,32 L720,28 L740,30 L760,26 L780,31 L800,29 L820,27 L840,32 L860,28 L880,30 L900,26 L920,31 L940,29 L960,27 L980,32 L1000,28 L1020,30 L1040,26 L1060,31 L1080,29 L1100,27 L1120,32 L1140,28 L1160,30 L1180,26 L1200,31 L1200,60 Z" fill="var(--bg-dark)" stroke="var(--border-light)" stroke-width="1" stroke-dasharray="4 3"></path>
+    </svg>
+  </div>
+</section>
+
+<section class="contact-faq-section" data-layout-spec="צור קשר-faq">
+  <div class="contact-faq-container">
+    <div class="contact-faq-header">
+      <h2>טוב לדעת</h2>
+      <p>כאן תמצאו תשובות לשאלות הנפוצות ביותר על המוצרים שלנו, תהליך ההזמנה והשירות. אם לא מצאתם את מה שחיפשתם, נשמח לעזור.</p>
+    </div>
+
+    <div class="contact-faq-list">
+      <div class="contact-faq-item">
+        <h3>איך אני יודע/ת איזה מידה מתאימה לי?</h3>
+        <p>בכל דף מוצר תמצאו טבלת מידות מפורטת עם מדידות מדויקות. אנחנו ממליצים למדוד חולצה אהובה שיש לכם בבית ולהשוות את המידות. במקרה של ספק, תמיד אפשר לפנות אלינו לייעוץ אישי.</p>
+      </div>
+
+      <div class="contact-faq-item">
+        <h3>איך מטפלים בבדים האקולוגיים?</h3>
+        <p>החולצות שלנו עשויות מכותנה אורגנית איכותית שמחזיקה מעמד לאורך זמן. מומלץ לכבס במכונה עד 30 מעלות, להימנע ממרכך כביסה, ולייבש באוויר. לא מומלץ ייבוש במייבש או גיהוץ בחום גבוה כדי לשמור על ההדפס והבד.</p>
+      </div>
+
+      <div class="contact-faq-item">
+        <h3>כמה זמן לוקח עד שהחולצה מגיעה?</h3>
+        <p>חולצות מהמלאי הקיים נשלחות תוך 2-3 ימי עסקים. הדפסות מותאמות אישית לוקחות 5-7 ימי עסקים מרגע אישור העיצוב. המשלוח עצמו אורך 3-5 ימי עסקים נוספים לכל הארץ. נעדכן אתכם בכל שלב בתהליך.</p>
+      </div>
+
+      <div class="contact-faq-item">
+        <h3>האם אפשר להזמין כמויות גדולות לאירועים?</h3>
+        <p>בהחלט! אנחנו מתמחים גם בהזמנות קבוצתיות לאירועי חברה, מתנות לעובדים, ואירועים מיוחדים. צרו איתנו קשר והשאירו פרטים על הפרויקט - נחזור אליכם עם הצעת מחיר מותאמת ותמיכה בבחירת העיצובים.</p>
+      </div>
+
+      <div class="contact-faq-item">
+        <h3>עובדים עם מעצבים וברנדים חיצוניים?</h3>
+        <p>אנחנו אוהבים שיתופי פעולה! אם אתם מעצבים, אמנים או בעלי מותג ומעוניינים בקולקציה משותפת או הדפסה על המוצרים שלנו, נשמח לשמוע. שלחו לנו תיק עבודות או רעיון ראשוני ונתחיל לדבר.</p>
+      </div>
+
+      <div class="contact-faq-item">
+        <h3>מה המדיניות להחזרות והחלפות?</h3>
+        <p>אם המוצר לא מתאים או יש בעיה באיכות, אפשר להחזיר או להחליף תוך 14 יום מקבלת ההזמנה. החולצה צריכה להיות במצב חדש עם התווית המקורית. הדפסות מותאמות אישית לא ניתנות להחזרה אלא במקרה של פגם בייצור.</p>
+      </div>
+
+      <div class="contact-faq-item">
+        <h3>איך אפשר ליצור קשר לשאלות נוספות?</h3>
+        <p>תמיד אפשר לכתוב לנו במייל, לשלוח הודעה בוואטסאפ, או למלא את טופס יצירת הקשר באתר. אנחנו עונים בדרך כלל תוך 24 שעות בימי עסקים. נשמח לעזור בכל שאלה, בקשה מיוחדת או ייעוץ.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="contact-faq-divider-wrapper">
+    <svg data-no-icon-edit="true" aria-hidden="true" viewBox="0 0 1200 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,80 L0,45 Q15,42 30,48 Q45,54 60,46 Q75,38 90,44 Q105,50 120,43 Q135,36 150,42 Q165,48 180,45 Q195,42 210,47 Q225,52 240,44 Q255,36 270,43 Q285,50 300,46 Q315,42 330,48 Q345,54 360,45 Q375,36 390,43 Q405,50 420,47 Q435,44 450,49 Q465,54 480,46 Q495,38 510,44 Q525,50 540,47 Q555,44 570,48 Q585,52 600,45 Q615,38 630,44 Q645,50 660,46 Q675,42 690,47 Q705,52 720,45 Q735,38 750,43 Q765,48 780,46 Q795,44 810,49 Q825,54 840,47 Q855,40 870,45 Q885,50 900,46 Q915,42 930,48 Q945,54 960,45 Q975,36 990,43 Q1005,50 1020,47 Q1035,44 1050,48 Q1065,52 1080,46 Q1095,40 1110,44 Q1125,48 1140,46 Q1155,44 1170,49 Q1185,54 1200,47 L1200,80 Z" fill="var(--bg-light)"></path>
+    </svg>
+  </div>
+</section>
+
+<section class="contact-location-section" data-layout-spec="צור קשר-location">
+  <div class="contact-location-container">
+    <div class="contact-location-content">
+      <h2>איפה אנחנו נמצאים</h2>
+      <p>ThreadFlow פועלת באזור המרכז, ומשרתת לקוחות בכל רחבי הארץ. אם יש לכם שאלות, רעיונות להדפסה אישית, או רק רוצים לשוחח על חולצות מעוצבות – נשמח לשמוע מכם דרך הטלפון, האימייל או הפגישה הפרונטלית שלנו.</p>
+      <p>אנחנו גם כאן בשבילכם מרחוק – תמיכה מלאה דרך הודעות, שיחות ווידאו, והתייעצויות וירטואליות. בין אם אתם בצפון, בדרום או במרכז, אנחנו פה כדי לעזור לכם למצוא את החולצה המושלמת.</p>
+    </div>
+    <div class="contact-location-visual">
+      <div class="contact-location-accent-tile"></div>
+      <div class="contact-location-image-wrapper">
+        <img data-placeholder="contact-location-image-1" data-context="A warm, inviting studio desk scene for a fashion brand (ThreadFlow) - showing natural fabrics draped elegantly, a sketchbook with clothing designs, color swatches, measuring tape, and soft natural lighting from a window. The scene should feel creative, artisanal, and welcoming, with earthy tones and textile textures. No people visible, just the creative workspace." width="600" height="400" src="/assets/site-contact-location-image-1.webp" alt="סטודיו עיצוב חולצות ThreadFlow עם בדים טבעיים ומדידות">
+      </div>
+    </div>
+  </div>
+  <div class="contact-location-divider-wrapper">
+    <svg data-no-icon-edit="true" aria-hidden="true" viewBox="0 0 1200 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,60 L0,45 Q30,42 60,45 T120,42 Q150,45 180,42 T240,45 Q270,42 300,45 T360,42 Q390,45 420,42 T480,45 Q510,42 540,45 T600,42 Q630,45 660,42 T720,45 Q750,42 780,45 T840,42 Q870,45 900,42 T960,45 Q990,42 1020,45 T1080,42 Q1110,45 1140,42 T1200,45 L1200,60 Z" fill="var(--bg-light)"></path>
+    </svg>
+  </div>
+</section>
+
+<section class="contact-cta-section" data-layout-spec="צור קשר-cta">
+  <div class="contact-cta-container">
+    <div class="contact-cta-card">
+      <h2 class="contact-cta-heading">מוכנים כשאתם מוכנים</h2>
+      <p class="contact-cta-text">נשמח לשמוע מכם ולעזור לכם למצוא את הפריט המושלם</p>
+      <a href="#contact-form" class="contact-cta-button">
+        <span>שלחו הודעה</span>
+        <svg data-element-type="icon" data-icon-type="svg" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 12L21 12M21 12L14 5M21 12L14 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+      </a>
+    </div>
+  </div>
+</section>
+  </main>
+  
+  <footer class="site-footer"><div class="footer-container"><div class="footer-grid"><div class="footer-column footer-about"><img src="/assets/business-logo.webp" alt="ThreadFlow" class="logo" /><p class="footer-description">ThreadFlow - אופנה ייחודית שמשלבת סטייל עכשווי עם איכות מעולה. גלו את הקולקציה החדשה שלנו.</p></div><div class="footer-column footer-links"><h3 class="footer-title">קישורים מהירים</h3><ul class="footer-nav"><li><a href="/about">אודות</a></li><li><a href="/contact">צור קשר</a></li></ul></div><div class="footer-column footer-contact"><h3 class="footer-title">צור קשר</h3><ul class="contact-list"><li><i class="fas fa-envelope"></i><a href="mailto:[business_email]">[business_email]</a></li><li><i class="fas fa-phone"></i><a href="tel:[business_phone]">[business_phone]</a></li><li><a href="/"><i class="fas fa-map-marker-alt"></i><span>[business_address]</span></a></li></ul></div><div class="footer-column footer-social"><h3 class="footer-title">עקבו אחרינו</h3><div class="social-links"><a href="[facebook_handle]" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a><a href="[instagram_handle]" aria-label="Instagram"><i class="fab fa-instagram"></i></a><a href="[whatsapp_handle]" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a></div></div></div><div class="footer-bottom"><div class="footer-legal"><a href="/privacy">Privacy Policy</a><span class="separator">|</span><a href="/terms">Terms &amp; Conditions</a><span class="separator">|</span>
+            <a href="/return-policy" aria-label="מדיניות החזרות">
+              מדיניות החזרות
+            </a><span class="separator">|</span><a href="/accessibility">Accessibility</a></div><div class="footer-copyright"><p>© 2026 ThreadFlow. All rights reserved.</p><a href="https://zappy5.com" target="_blank" class="zappy-attribution">Generated by Zappy</a></div></div></div></footer>
+  
+  <a href="https://wa.me/[whatsapp_handle]" class="whatsapp-float" aria-label="WhatsApp">
+    <i class="fab fa-whatsapp"></i>
+  </a>
+  
+  <div data-integration="accessibility:toolbar"></div>
+
+    <script src="/script.js"></script>
+
+    <script id="zappy-mobile-submenu-script">
+    (function() {
+      function initMobileSubmenuToggles() {
+        if (window.innerWidth > 768) {
+          document.querySelectorAll('.mobile-submenu-toggle').forEach(function(btn) { btn.remove(); });
+          document.querySelectorAll('.sub-menu.mobile-expanded').forEach(function(menu) { menu.classList.remove('mobile-expanded'); });
+          return;
+        }
+        var items = document.querySelectorAll('.nav-menu li:has(.sub-menu), nav li:has(.sub-menu), .navbar li:has(.sub-menu), #navMenu li:has(.sub-menu)');
+        items.forEach(function(li) {
+          if (li.querySelector('.mobile-submenu-toggle')) return;
+          var submenu = li.querySelector('.sub-menu');
+          var parentLink = li.querySelector(':scope > a');
+          if (!submenu || !parentLink) return;
+          var toggleBtn = document.createElement('button');
+          toggleBtn.className = 'mobile-submenu-toggle';
+          toggleBtn.setAttribute('aria-label', 'Toggle submenu');
+          toggleBtn.setAttribute('type', 'button');
+          parentLink.insertAdjacentElement('afterend', toggleBtn);
+          toggleBtn.addEventListener('click', function(e) {
+            e.preventDefault(); e.stopPropagation();
+            document.querySelectorAll('.sub-menu.mobile-expanded').forEach(function(menu) {
+              if (menu !== submenu) { menu.classList.remove('mobile-expanded'); var t = menu.parentElement.querySelector('.mobile-submenu-toggle'); if(t) t.classList.remove('expanded'); }
+            });
+            submenu.classList.toggle('mobile-expanded');
+            toggleBtn.classList.toggle('expanded');
+          });
+        });
+      }
+      if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initMobileSubmenuToggles); }
+      else { initMobileSubmenuToggles(); }
+      var resizeTimer; window.addEventListener('resize', function() { clearTimeout(resizeTimer); resizeTimer = setTimeout(initMobileSubmenuToggles, 250); });
+      // Re-initialize when mobile menu becomes visible (MutationObserver)
+      var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          if (mutation.type === 'attributes') {
+            var target = mutation.target;
+            if (target.classList && (target.classList.contains('active') || target.classList.contains('open'))) {
+              setTimeout(initMobileSubmenuToggles, 100);
+            }
+          }
+        });
+      });
+      setTimeout(function() {
+        document.querySelectorAll('.mobile-menu, .nav-menu, #navMenu, nav').forEach(function(menu) {
+          observer.observe(menu, { attributes: true, attributeFilter: ['class', 'style'] });
+        });
+      }, 500);
+    })();
+    </script>
+</body>
+</html>
